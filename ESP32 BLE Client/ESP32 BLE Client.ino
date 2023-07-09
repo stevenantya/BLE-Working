@@ -33,12 +33,16 @@ static BLEUUID accelerometerSensorServiceUUID("4fafc201-1fb5-459e-8fcc-c5c9c3319
 // The characteristic of the remote service we are interested in.
 static BLEUUID acclerometerCharacteristicUUID("beb5483e-36e1-4688-b7f5-ea07361b26a8");
 
-
+// The remote service we wish to connect to.
+static BLEUUID proximityColorSensorServiceUUID("7cf0c267-4712-4ad8-bd08-47c1e7ed5e34");
+// The characteristic of the remote service we are interested in.
+static BLEUUID proximityColorCharacteristicUUID("6ad7b9c7-5f64-48f2-8a3b-2aeb886145b8");
 
 static boolean doConnect = false;
 static boolean connected = false;
 static boolean doScan = false;
-static BLERemoteCharacteristic* pRemoteCharacteristicX;
+static BLERemoteCharacteristic* pRemoteCharacteristicAcc;
+static BLERemoteCharacteristic* pRemoteCharacteristicProx;
 static BLEAdvertisedDevice* myDevice;
 
 void setupWiFi() {
@@ -127,10 +131,12 @@ bool connectToServer() {
     pClient->connect(myDevice);  // if you pass BLEAdvertisedDevice instead of address, it will be recognized type of peer device address (public or private)
     Serial.println(" - Connected to server");
     pClient->setMTU(517); //set client to request maximum MTU from server (default is 23 otherwise)
-  
+
+    // Accelerometer Service and Characteristic
+    
     // Obtain a reference to the service we are after in the remote BLE server.
-    BLERemoteService* pRemoteService = pClient->getService(accelerometerSensorServiceUUID);
-    if (pRemoteService == nullptr) {
+    BLERemoteService* pRemoteServiceAcc = pClient->getService(accelerometerSensorServiceUUID);
+    if (pRemoteServiceAcc == nullptr) {
       Serial.print("Failed to find our service UUID: ");
       Serial.println(accelerometerSensorServiceUUID.toString().c_str());
       pClient->disconnect();
@@ -140,8 +146,8 @@ bool connectToServer() {
 
 
     // Obtain a reference to the characteristic in the service of the remote BLE server.
-    pRemoteCharacteristicX = pRemoteService->getCharacteristic(acclerometerCharacteristicUUID);
-    if (pRemoteCharacteristicX == nullptr) {
+    pRemoteCharacteristicAcc = pRemoteServiceAcc->getCharacteristic(acclerometerCharacteristicUUID);
+    if (pRemoteCharacteristicAcc == nullptr) {
       Serial.print("Failed to find our characteristic UUID: ");
       Serial.println(acclerometerCharacteristicUUID.toString().c_str());
       pClient->disconnect();
@@ -151,17 +157,55 @@ bool connectToServer() {
 
 
     // Read the value of the characteristic.
-    if(pRemoteCharacteristicX->canRead()) {
-      int value = pRemoteCharacteristicX->readUInt8();
+    if(pRemoteCharacteristicAcc->canRead()) {
+      int value = pRemoteCharacteristicAcc->readUInt8();
       // Serial.print("The characteristic value was: ");
       // Serial.println(value);
       // Serial.println("TESTvalue");
     }
 
 
-    if(pRemoteCharacteristicX->canNotify())
-      pRemoteCharacteristicX->registerForNotify(notifyCallback);
+    if(pRemoteCharacteristicAcc->canNotify())
+      pRemoteCharacteristicAcc->registerForNotify(notifyCallback);
 
+
+
+
+
+    // Proxmity and Color Sensor Service and Characteristic
+
+    BLERemoteService* pRemoteServiceProx = pClient->getService(proximityColorSensorServiceUUID);
+    if (pRemoteServiceProx == nullptr) {
+      Serial.print("Failed to find our service UUID: ");
+      Serial.println(proximityColorSensorServiceUUID.toString().c_str());
+      pClient->disconnect();
+      return false;
+    }
+    Serial.println(" - Found our service");
+
+
+    // Obtain a reference to the characteristic in the service of the remote BLE server.
+    pRemoteCharacteristicProx = pRemoteServiceProx->getCharacteristic(proximityColorCharacteristicUUID);
+    if (pRemoteCharacteristicProx == nullptr) {
+      Serial.print("Failed to find our characteristic UUID: ");
+      Serial.println(proximityColorCharacteristicUUID.toString().c_str());
+      pClient->disconnect();
+      return false;
+    }
+    Serial.println(" - Found our characteristic");
+
+
+    // Read the value of the characteristic.
+    if(pRemoteCharacteristicProx->canRead()) {
+      int value = pRemoteCharacteristicProx->readUInt8();
+      // Serial.print("The characteristic value was: ");
+      // Serial.println(value);
+      // Serial.println("TESTvalue");
+    }
+
+
+    if(pRemoteCharacteristicProx->canNotify())
+      pRemoteCharacteristicProx->registerForNotify(notifyCallback);
 
     connected = true;
     return true;
@@ -178,7 +222,8 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
     Serial.println(advertisedDevice.toString().c_str());
 
     // We have found a device, let us now see if it contains the service we are looking for.
-    if (advertisedDevice.haveServiceUUID() && advertisedDevice.isAdvertisingService(accelerometerSensorServiceUUID)) {
+    if (advertisedDevice.haveServiceUUID() && advertisedDevice.isAdvertisingService(accelerometerSensorServiceUUID) 
+        && advertisedDevice.isAdvertisingService(proximityColorSensorServiceUUID)) {
 
       BLEDevice::getScan()->stop();
       myDevice = new BLEAdvertisedDevice(advertisedDevice);
@@ -265,7 +310,9 @@ void loop() {
     // Serial.println("Setting new characteristic value to \"" + newValue + "\"");
     
     // Set the characteristic's value to be the array of bytes that is actually a string.
-    pRemoteCharacteristicX->writeValue(newValue.c_str(), newValue.length());
+    pRemoteCharacteristicAcc->writeValue(newValue.c_str(), newValue.length());
+    pRemoteCharacteristicProx->writeValue(newValue.c_str(), newValue.length());
+    
     digitalWrite(ledYellow, HIGH);
   }else if(doScan){
     BLEDevice::getScan()->start(0);  // this is just example to start scan after disconnect, most likely there is better way to do it in arduino
