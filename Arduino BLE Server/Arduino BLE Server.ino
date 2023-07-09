@@ -21,7 +21,8 @@
 #include <Arduino_APDS9960.h>
 
  // Bluetooth® Low Energy Battery Service
-BLEService sensorService("4fafc201-1fb5-459e-8fcc-c5c9c331914b");
+BLEService accelerometerSensorService("4fafc201-1fb5-459e-8fcc-c5c9c331914b");
+BLEService proximityColorSensorService("7cf0c267-4712-4ad8-bd08-47c1e7ed5e34");
 
 //Accelerometer Variables
 char acc_x[7] = "-00.00";
@@ -33,7 +34,7 @@ char accData[150] = "-00.00,-00.00,-0.00\n-00.00,-00.00,-00.00\n-00.00,-00.00,-0
 int proximity = 0;
 int r = 0, g = 0, b = 0;
 unsigned long lastUpdate = 0;
-char proximityColorData[150] = "0";
+char proximityColorData[150] = "000,000,000,000";
 
 // Bluetooth® Low Energy Battery Level Characteristic
 BLECharacteristic accelerometerSensor("beb5483e-36e1-4688-b7f5-ea07361b26a8",  // standard 16-bit characteristic UUID
@@ -70,11 +71,16 @@ void setup() {
      The name can be changed but maybe be truncated based on space left in advertisement packet
   */
   BLE.setLocalName("Accelerometer Nano 33");
-  BLE.setAdvertisedService(sensorService); // add the service UUID
-  sensorService.addCharacteristic(accelerometerSensor); // add the battery level characteristic
-  sensorService.addCharacteristic(proximityColorSensor);
 
-  BLE.addService(sensorService); // Add the battery service
+  BLE.setAdvertisedService(accelerometerSensorService); // add the service UUID
+  accelerometerSensorService.addCharacteristic(accelerometerSensor); // add the battery level characteristic
+
+  BLE.setAdvertisedService(proximityColorSensorService);
+  proximityColorSensorService.addCharacteristic(proximityColorSensor);
+
+  BLE.addService(accelerometerSensorService); // Add the battery service
+  BLE.addService(proximityColorSensorService);
+
   accelerometerSensor.writeValue(acc_x); // set initial value for this characteristic
   proximityColorSensor.writeValue(proximityColorData);
 
@@ -114,7 +120,8 @@ void loop() {
         updateAccelerometer();
       }
 
-      if (APDS.proximityAvailable() && APDS.colorAvailable) {
+      if (APDS.proximityAvailable() && APDS.colorAvailable() && ((curr_time - lastUpdate) > 78)) {
+        lastUpdate = millis();
         updateProximityColorSensor();
       }
     }
@@ -128,6 +135,27 @@ void loop() {
 void updateProximityColorSensor() {
   proximity = APDS.readProximity();
   APDS.readColor(r, g, b);
+  
+  char char_r[7] = "000";
+  char char_g[7] = "000";
+  char char_b[7] = "000";
+  char char_proximity[7] = "000";
+
+  itoa(r,char_r,10);
+  itoa(g,char_g,10);
+  itoa(b,char_b,10);
+  itoa(proximity,char_proximity,10);
+
+  strcpy(proximityColorData, char_proximity);
+  strcat(proximityColorData, ",");
+  strcat(proximityColorData, char_r);
+  strcat(proximityColorData, ",");
+  strcat(proximityColorData, char_g);
+  strcat(proximityColorData, ",");
+  strcat(proximityColorData, char_b);
+  strcat(proximityColorData, "\n");
+
+  proximityColorSensor.writeValue(proximityColorData);
 }
 
 int internal_counter = 0;

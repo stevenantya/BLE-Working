@@ -29,9 +29,11 @@ WiFiClient espClient;
 PubSubClient client(espClient);
 
 // The remote service we wish to connect to.
-static BLEUUID serviceUUID("4fafc201-1fb5-459e-8fcc-c5c9c331914b");
+static BLEUUID accelerometerSensorServiceUUID("4fafc201-1fb5-459e-8fcc-c5c9c331914b");
 // The characteristic of the remote service we are interested in.
-static BLEUUID    accelerometerXChar("beb5483e-36e1-4688-b7f5-ea07361b26a8");
+static BLEUUID acclerometerCharacteristicUUID("beb5483e-36e1-4688-b7f5-ea07361b26a8");
+
+
 
 static boolean doConnect = false;
 static boolean connected = false;
@@ -127,10 +129,10 @@ bool connectToServer() {
     pClient->setMTU(517); //set client to request maximum MTU from server (default is 23 otherwise)
   
     // Obtain a reference to the service we are after in the remote BLE server.
-    BLERemoteService* pRemoteService = pClient->getService(serviceUUID);
+    BLERemoteService* pRemoteService = pClient->getService(accelerometerSensorServiceUUID);
     if (pRemoteService == nullptr) {
       Serial.print("Failed to find our service UUID: ");
-      Serial.println(serviceUUID.toString().c_str());
+      Serial.println(accelerometerSensorServiceUUID.toString().c_str());
       pClient->disconnect();
       return false;
     }
@@ -138,10 +140,10 @@ bool connectToServer() {
 
 
     // Obtain a reference to the characteristic in the service of the remote BLE server.
-    pRemoteCharacteristicX = pRemoteService->getCharacteristic(accelerometerXChar);
+    pRemoteCharacteristicX = pRemoteService->getCharacteristic(acclerometerCharacteristicUUID);
     if (pRemoteCharacteristicX == nullptr) {
       Serial.print("Failed to find our characteristic UUID: ");
-      Serial.println(accelerometerXChar.toString().c_str());
+      Serial.println(acclerometerCharacteristicUUID.toString().c_str());
       pClient->disconnect();
       return false;
     }
@@ -176,7 +178,7 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
     Serial.println(advertisedDevice.toString().c_str());
 
     // We have found a device, let us now see if it contains the service we are looking for.
-    if (advertisedDevice.haveServiceUUID() && advertisedDevice.isAdvertisingService(serviceUUID)) {
+    if (advertisedDevice.haveServiceUUID() && advertisedDevice.isAdvertisingService(accelerometerSensorServiceUUID)) {
 
       BLEDevice::getScan()->stop();
       myDevice = new BLEAdvertisedDevice(advertisedDevice);
