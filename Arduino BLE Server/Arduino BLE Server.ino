@@ -110,7 +110,7 @@ void loop() {
     // while the central is connected:
     bool isFirstConnection = true;
     while (central.connected()) {
-      curr_time = millis();
+      int curr_time = millis();
       if (isFirstConnection) {
         while (millis() < curr_time + 2000); //wait for 2 seconds for bluetooth to establish correctly
         isFirstConnection = false;
