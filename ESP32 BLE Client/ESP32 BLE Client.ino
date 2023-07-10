@@ -222,8 +222,8 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
     Serial.println(advertisedDevice.toString().c_str());
 
     // We have found a device, let us now see if it contains the service we are looking for.
-    if (advertisedDevice.haveServiceUUID() && advertisedDevice.isAdvertisingService(accelerometerSensorServiceUUID) 
-        && advertisedDevice.isAdvertisingService(proximityColorSensorServiceUUID)) {
+    if (advertisedDevice.haveServiceUUID() && (advertisedDevice.isAdvertisingService(accelerometerSensorServiceUUID) 
+        || advertisedDevice.isAdvertisingService(proximityColorSensorServiceUUID))) {
 
       BLEDevice::getScan()->stop();
       myDevice = new BLEAdvertisedDevice(advertisedDevice);
@@ -253,8 +253,9 @@ void setup() {
   // have detected a new device.  Specify that we want active scanning and start the
   // scan to run for 5 seconds.
 
-  setupWiFi();
-  client.setServer(mqttServer, mqttPort);
+  //UNCOMMENT FOR MQTT
+  // setupWiFi();
+  // client.setServer(mqttServer, mqttPort);
 
 
 } // End of setup.
@@ -264,17 +265,17 @@ int countBLE = 0;
 // This is the Arduino main loop function.
 void loop() {
 
-  while (!client.connected()) {
-    digitalWrite(ledPin, LOW);
-    digitalWrite(ledRed, LOW);
-    digitalWrite(ledYellow, LOW);
-    digitalWrite(ledGreen, LOW);
-    reconnect();
-  }
-
-  if (client.connected()) {
-    digitalWrite(ledRed, HIGH);
-  }
+  //UNCOMMENT FOR MQTT
+  // while (!client.connected()) {
+  //   digitalWrite(ledPin, LOW);
+  //   digitalWrite(ledRed, LOW);
+  //   digitalWrite(ledYellow, LOW);
+  //   digitalWrite(ledGreen, LOW);
+  //   reconnect();
+  // }
+  // if (client.connected()) {
+  //   digitalWrite(ledRed, HIGH);
+  // }
 
   if (countBLE == 0) {
     BLEScan* pBLEScan = BLEDevice::getScan();
@@ -289,7 +290,9 @@ void loop() {
   // If the flag "doConnect" is true then we have scanned for and found the desired
   // BLE Server with which we wish to connect.  Now we connect to it.  Once we are 
   // connected we set the connected flag to be true.
-  while (doConnect == true && client.connected()) {
+  //UNCOMMENT FOR MQTT
+  // while (doConnect == true && client.connected()) {
+  while (doConnect == true) {
     Serial.println("trying to connect...");
     if (connectToServer()) {
       Serial.println("We are now connected to the BLE Server.");

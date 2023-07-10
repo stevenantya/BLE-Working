@@ -74,11 +74,10 @@ void setup() {
 
   BLE.setAdvertisedService(accelerometerSensorService); // add the service UUID
   accelerometerSensorService.addCharacteristic(accelerometerSensor); // add the battery level characteristic
+  BLE.addService(accelerometerSensorService); // Add the battery service
 
   BLE.setAdvertisedService(proximityColorSensorService);
   proximityColorSensorService.addCharacteristic(proximityColorSensor);
-
-  BLE.addService(accelerometerSensorService); // Add the battery service
   BLE.addService(proximityColorSensorService);
 
   accelerometerSensor.writeValue(acc_x); // set initial value for this characteristic
