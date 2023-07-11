@@ -19,7 +19,7 @@ int ledGreen = 26;
 // Replace these with your WiFi and MQTT broker details
 const char* ssid = "myuan";
 const char* password = "98765432";
-const char* mqttServer = "192.168.194.135";
+const char* mqttServer = "192.168.237.135";
 const int mqttPort = 1883;
 const char* mqttUser = "pi";  // If needed
 const char* mqttPassword = "123456"; // If needed
@@ -45,6 +45,7 @@ static BLERemoteCharacteristic* pRemoteCharacteristicAcc;
 static BLERemoteCharacteristic* pRemoteCharacteristicProx;
 static BLEAdvertisedDevice* myDevice;
 
+//MQTT
 void setupWiFi() {
   delay(10);
   Serial.println();
@@ -64,6 +65,7 @@ void setupWiFi() {
   Serial.println(WiFi.localIP());
 }
 
+//MQTT
 void reconnect() {
   // Loop until we're reconnected
   while (!client.connected()) {
@@ -84,7 +86,7 @@ void reconnect() {
 
 String messageAppended = "";
 int counter = 1;
-
+//MQTT Send Message
 static void notifyCallback(
   BLERemoteCharacteristic* pBLERemoteCharacteristic,
   uint8_t* pData,
@@ -93,18 +95,24 @@ static void notifyCallback(
     // Serial.print(millis());
     // Serial.print("  ");
     // Serial.print("Notify callback for characteristic ");
-    // String identifier = pBLERemoteCharacteristic->getUUID().toString().c_str();
-    // if (identifier.equals("beb5483e-36e1-4688-b7f5-ea07361b26a8")) {
-    //   // Serial.print("acceleration reading = ");
-    // }
+    String identifier = pBLERemoteCharacteristic->getUUID().toString().c_str();
+    if (identifier.equals("beb5483e-36e1-4688-b7f5-ea07361b26a8")) {
+      //Acceleration
+      client.publish("vibration", pData, length);
+    } else if (identifier.equals("6ad7b9c7-5f64-48f2-8a3b-2aeb886145b8")) {
+      //Light Sensor
+      client.publish("light", pData, length);
+    }
     // char* dataChar = (char*)pData;
     digitalWrite(ledPin, HIGH);
     digitalWrite(ledGreen, HIGH);
     Serial.write(pData, length);
+
     client.publish("test/status", pData, length);
     Serial.println();
 }
 
+//BLE
 class MyClientCallback : public BLEClientCallbacks {
   void onConnect(BLEClient* pclient) {
     digitalWrite(ledYellow, HIGH);
@@ -118,6 +126,7 @@ class MyClientCallback : public BLEClientCallbacks {
   }
 };
 
+//BLE
 bool connectToServer() {
     Serial.print("Forming a connection to ");
     Serial.println(myDevice->getAddress().toString().c_str());
@@ -254,8 +263,8 @@ void setup() {
   // scan to run for 5 seconds.
 
   //UNCOMMENT FOR MQTT
-  // setupWiFi();
-  // client.setServer(mqttServer, mqttPort);
+  setupWiFi();
+  client.setServer(mqttServer, mqttPort);
 
 
 } // End of setup.
@@ -266,16 +275,16 @@ int countBLE = 0;
 void loop() {
 
   //UNCOMMENT FOR MQTT
-  // while (!client.connected()) {
-  //   digitalWrite(ledPin, LOW);
-  //   digitalWrite(ledRed, LOW);
-  //   digitalWrite(ledYellow, LOW);
-  //   digitalWrite(ledGreen, LOW);
-  //   reconnect();
-  // }
-  // if (client.connected()) {
-  //   digitalWrite(ledRed, HIGH);
-  // }
+  while (!client.connected()) {
+    digitalWrite(ledPin, LOW);
+    digitalWrite(ledRed, LOW);
+    digitalWrite(ledYellow, LOW);
+    digitalWrite(ledGreen, LOW);
+    reconnect();
+  }
+  if (client.connected()) {
+    digitalWrite(ledRed, HIGH);
+  }
 
   if (countBLE == 0) {
     BLEScan* pBLEScan = BLEDevice::getScan();
@@ -291,8 +300,8 @@ void loop() {
   // BLE Server with which we wish to connect.  Now we connect to it.  Once we are 
   // connected we set the connected flag to be true.
   //UNCOMMENT FOR MQTT
-  // while (doConnect == true && client.connected()) {
-  while (doConnect == true) {
+  while (doConnect == true && client.connected()) {
+  // while (doConnect == true) {
     Serial.println("trying to connect...");
     if (connectToServer()) {
       Serial.println("We are now connected to the BLE Server.");

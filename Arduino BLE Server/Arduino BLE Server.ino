@@ -34,7 +34,7 @@ char accData[150] = "-00.00,-00.00,-0.00\n-00.00,-00.00,-00.00\n-00.00,-00.00,-0
 int proximity = 0;
 int r = 0, g = 0, b = 0;
 unsigned long lastUpdate = 0;
-char proximityColorData[150] = "000,000,000,000";
+char proximityColorData[150] = "0000,0000,0000,0000\n";
 
 // Bluetooth® Low Energy Battery Level Characteristic
 BLECharacteristic accelerometerSensor("beb5483e-36e1-4688-b7f5-ea07361b26a8",  // standard 16-bit characteristic UUID
@@ -153,7 +153,6 @@ void updateProximityColorSensor() {
   strcat(proximityColorData, ",");
   strcat(proximityColorData, char_b);
   strcat(proximityColorData, "\n");
-
   proximityColorSensor.writeValue(proximityColorData);
 }
 
