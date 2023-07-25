@@ -44,7 +44,7 @@ BLECharacteristic proximityColorSensor("6ad7b9c7-5f64-48f2-8a3b-2aeb886145b8",  
 
 void setup() {
   Serial.begin(115200);    // initialize serial communication
-  while (!Serial);
+  // while (!Serial);
 
   if (!IMU.begin()) {
     Serial.println("Failed to initialize IMU!");
