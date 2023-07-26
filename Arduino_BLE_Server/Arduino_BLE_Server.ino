@@ -25,10 +25,10 @@ BLEService accelerometerSensorService("4fafc201-1fb5-459e-8fcc-c5c9c331914b");
 BLEService proximityColorSensorService("7cf0c267-4712-4ad8-bd08-47c1e7ed5e34");
 
 //Accelerometer Variables
-char acc_x[7] = "-00.00";
-char acc_y[7] = "-00.00";
-char acc_z[7] = "-00.00";
-char accData[150] = "-00.00,-00.00,-0.00\n-00.00,-00.00,-00.00\n-00.00,-00.00,-00.00\n-00.00,-00.00,-00.00\n-00.00,-00.00,-00.00\n";
+char acc_x[10] = "-00.0000";
+char acc_y[10] = "-00.0000";
+char acc_z[10] = "-00.0000";
+char accData[200] = "-00.0000 -00.0000 -00.0000\n-00.0000 -00.0000 -00.0000\n-00.0000 -00.0000 -00.0000\n-00.0000 -00.0000 -00.0000\n-00.0000 -00.0000 -00.0000\n";
 
 //Light Sensor Variables
 int proximity = 0;
@@ -157,16 +157,16 @@ void updateProximityColorSensor() {
 }
 
 int internal_counter = 0;
-char final[150];
+char final[200];
 
 void updateAccelerometer() {
 
   float x,y,z;
   IMU.readAcceleration(x, y, z);
   
-  dtostrf((double)x, 2, 2, acc_x);
-  dtostrf((double)y, 2, 2, acc_y);
-  dtostrf((double)z, 2, 2, acc_z);
+  dtostrf(x, 2, 4, acc_x);
+  dtostrf(y, 2, 4, acc_y);
+  dtostrf(z, 2, 4, acc_z);
 
   strcpy(accData, acc_x);
   strcat(accData," ");
@@ -189,3 +189,4 @@ void updateAccelerometer() {
   }
   
 }
+
