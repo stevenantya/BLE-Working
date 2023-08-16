@@ -25,16 +25,16 @@ BLEService accelerometerSensorService("4fafc201-1fb5-459e-8fcc-c5c9c331914b");
 BLEService proximityColorSensorService("7cf0c267-4712-4ad8-bd08-47c1e7ed5e34");
 
 //Accelerometer Variables
-char acc_x[7] = "-00.00";
-char acc_y[7] = "-00.00";
-char acc_z[7] = "-00.00";
-char accData[150] = "-00.00,-00.00,-0.00\n-00.00,-00.00,-00.00\n-00.00,-00.00,-00.00\n-00.00,-00.00,-00.00\n-00.00,-00.00,-00.00\n";
+char acc_x[10] = "-00.0000";
+char acc_y[10] = "-00.0000";
+char acc_z[10] = "-00.0000";
+char accData[200] = "-00.0000 -00.0000 -00.0000\n-00.0000 -00.0000 -00.0000\n-00.0000 -00.0000 -00.0000\n-00.0000 -00.0000 -00.0000\n-00.0000 -00.0000 -00.0000\n";
 
 //Light Sensor Variables
 int proximity = 0;
 int r = 0, g = 0, b = 0;
 unsigned long lastUpdate = 0;
-char proximityColorData[150] = "000,000,000,000";
+char proximityColorData[150] = "0000,0000,0000,0000\n";
 
 // Bluetooth® Low Energy Battery Level Characteristic
 BLECharacteristic accelerometerSensor("beb5483e-36e1-4688-b7f5-ea07361b26a8",  // standard 16-bit characteristic UUID
@@ -44,7 +44,7 @@ BLECharacteristic proximityColorSensor("6ad7b9c7-5f64-48f2-8a3b-2aeb886145b8",  
 
 void setup() {
   Serial.begin(115200);    // initialize serial communication
-  while (!Serial);
+  // while (!Serial);
 
   if (!IMU.begin()) {
     Serial.println("Failed to initialize IMU!");
@@ -74,11 +74,10 @@ void setup() {
 
   BLE.setAdvertisedService(accelerometerSensorService); // add the service UUID
   accelerometerSensorService.addCharacteristic(accelerometerSensor); // add the battery level characteristic
+  BLE.addService(accelerometerSensorService); // Add the battery service
 
   BLE.setAdvertisedService(proximityColorSensorService);
   proximityColorSensorService.addCharacteristic(proximityColorSensor);
-
-  BLE.addService(accelerometerSensorService); // Add the battery service
   BLE.addService(proximityColorSensorService);
 
   accelerometerSensor.writeValue(acc_x); // set initial value for this characteristic
@@ -110,7 +109,7 @@ void loop() {
     // while the central is connected:
     bool isFirstConnection = true;
     while (central.connected()) {
-      curr_time = millis();
+      int curr_time = millis();
       if (isFirstConnection) {
         while (millis() < curr_time + 2000); //wait for 2 seconds for bluetooth to establish correctly
         isFirstConnection = false;
@@ -154,21 +153,20 @@ void updateProximityColorSensor() {
   strcat(proximityColorData, ",");
   strcat(proximityColorData, char_b);
   strcat(proximityColorData, "\n");
-
   proximityColorSensor.writeValue(proximityColorData);
 }
 
 int internal_counter = 0;
-char final[150];
+char final[200];
 
 void updateAccelerometer() {
 
   float x,y,z;
   IMU.readAcceleration(x, y, z);
   
-  dtostrf((double)x, 2, 2, acc_x);
-  dtostrf((double)y, 2, 2, acc_y);
-  dtostrf((double)z, 2, 2, acc_z);
+  dtostrf(x, 2, 4, acc_x);
+  dtostrf(y, 2, 4, acc_y);
+  dtostrf(z, 2, 4, acc_z);
 
   strcpy(accData, acc_x);
   strcat(accData," ");
@@ -191,3 +189,4 @@ void updateAccelerometer() {
   }
   
 }
+
