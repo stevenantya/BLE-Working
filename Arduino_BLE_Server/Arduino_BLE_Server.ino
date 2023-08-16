@@ -34,6 +34,7 @@ char accData[200] = "-00.0000 -00.0000 -00.0000\n-00.0000 -00.0000 -00.0000\n-00
 int proximity = 0;
 int r = 0, g = 0, b = 0;
 unsigned long lastUpdate = 0;
+unsigned long lastAccUpdate = 0;
 char proximityColorData[150] = "0000,0000,0000,0000\n";
 
 // Bluetooth® Low Energy Battery Level Characteristic
@@ -115,7 +116,8 @@ void loop() {
         isFirstConnection = false;
       }
       // if 200ms have passed, check the battery level:
-      if (IMU.accelerationAvailable()) {
+      if (IMU.accelerationAvailable() && ((curr_time - lastAccUpdate) > 100)) {
+        lastAccUpdate = millis();
         updateAccelerometer();
       }
 
