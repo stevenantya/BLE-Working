@@ -185,10 +185,8 @@ void loop() {
 
     //LIGHT SENSOR
     int proximity,r,g,b;
-    if (APDS.proximityAvailable() && APDS.colorAvailable()) {
-        proximity = APDS.readProximity();
-        APDS.readColor(r, g, b);
-    }
+    proximity = APDS.readProximity();
+    APDS.readColor(r, g, b);
 
     //MICROPHONE
     int dummyVolume = 10;
