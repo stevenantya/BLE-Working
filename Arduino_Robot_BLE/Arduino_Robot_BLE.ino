@@ -195,7 +195,21 @@ void updateBarometerData() {
     float altitude = baro.getAltitude();
     float temperature = baro.getTemperature();
 
-    
+    char char_pressure[7] = "0000.00";
+    char char_altitude[7] = "0000.00";
+    char char_temperature[7] = "00.00";
+
+    dtostrf(pressure, 0, 2, char_pressure);
+    dtostrf(altitude, 0, 2, char_altitude);
+    dtostrf(temperature, 0, 2, char_temperature);
+
+    strcpy(altimeterTemperatureData, char_pressure);
+    strcat(altimeterTemperatureData, ",");
+    strcat(altimeterTemperatureData, char_altitude);
+    strcat(altimeterTemperatureData, ",");
+    strcat(altimeterTemperatureData, char_temperature);
+
+    altimeterTemperatureSensor.writeValue(altimeterTemperatureData);
 }
 
 void updateAirQualityData() {
@@ -221,16 +235,89 @@ void updateAirQualityData() {
         errorToString(error, errorMessage, 256);
         Serial.println(errorMessage);
     }
+
+    //create char conversion using dtostrf for all variables above
+    char char_massConcentrationPm1p0[7] = "00.00";
+    char char_massConcentrationPm2p5[7] = "00.00";
+    char char_massConcentrationPm4p0[7] = "00.00";
+    char char_massConcentrationPm10p0[7] = "00.00";
+    char char_ambientHumidity[7] = "00.00";
+    char char_ambientTemperature[7] = "00.00";
+    char char_vocIndex[7] = "00.00";
+
+    //convert all variables above to char
+    dtostrf(massConcentrationPm1p0, 0, 2, char_massConcentrationPm1p0);
+    dtostrf(massConcentrationPm2p5, 0, 2, char_massConcentrationPm2p5);
+    dtostrf(massConcentrationPm4p0, 0, 2, char_massConcentrationPm4p0);
+    dtostrf(massConcentrationPm10p0, 0, 2, char_massConcentrationPm10p0);
+    dtostrf(ambientHumidity, 0, 2, char_ambientHumidity);
+    dtostrf(ambientTemperature, 0, 2, char_ambientTemperature);
+    dtostrf(vocIndex, 0, 2, char_vocIndex);
+
+    //concatenate all char variables above into one char variable
+    strcpy(airQualityData, char_massConcentrationPm1p0);
+    strcat(airQualityData, ",");
+    strcat(airQualityData, char_massConcentrationPm2p5);
+    strcat(airQualityData, ",");
+    strcat(airQualityData, char_massConcentrationPm4p0);
+    strcat(airQualityData, ",");
+    strcat(airQualityData, char_massConcentrationPm10p0);
+    strcat(airQualityData, ",");
+    strcat(airQualityData, char_ambientHumidity);
+    strcat(airQualityData, ",");
+    strcat(airQualityData, char_ambientTemperature);
+    strcat(airQualityData, ",");
+    strcat(airQualityData, char_vocIndex);
+
+    //write the char variable to the BLE characteristic
+    airQualitySensor.writeValue(airQualityData);
+
 }
 
 void updateLightSensorData() {
     int proximity,r,g,b;
     proximity = APDS.readProximity();
     APDS.readColor(r, g, b);
+
+    //create char conversion using dtostrf for all variables above
+    char char_proximity[7] = "0000";
+    char char_r[7] = "0000";
+    char char_g[7] = "0000";
+    char char_b[7] = "0000";
+
+    //convert all variables above to char
+    itoa(proximity,char_proximity,10);
+    itoa(r,char_r,10);
+    itoa(g,char_g,10);
+    itoa(b,char_b,10);
+
+    //concatenate all char variables above into one char variable
+    strcpy(proximityColorData, char_proximity);
+    strcat(proximityColorData, ",");
+    strcat(proximityColorData, char_r);
+    strcat(proximityColorData, ",");
+    strcat(proximityColorData, char_g);
+    strcat(proximityColorData, ",");
+    strcat(proximityColorData, char_b);
+
+    //write the char variable to the BLE characteristic
+    proximityColorSensor.writeValue(proximityColorData);
 }
 
 void updateMicrophoneData() {
     float microphoneData = getMicrophoneData();
+
+    //create char conversion using dtostrf for all variables above
+    char char_microphoneData[7] = "0000.00";
+
+    //convert all variables above to char
+    dtostrf(microphoneData, 0, 2, char_microphoneData);
+
+    //concatenate all char variables above into one char variable
+    strcpy(microphoneData, char_microphoneData);
+
+    //write the char variable to the BLE characteristic
+    microphoneSensor.writeValue(microphoneData);
 }
 
 void setup() {

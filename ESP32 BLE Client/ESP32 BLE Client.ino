@@ -28,23 +28,31 @@ const char* mqttTopic = "test/data";
 WiFiClient espClient;
 PubSubClient client(espClient);
 
-//TODO Add other UUIDs
-// The remote service we wish to connect to.
-static BLEUUID accelerometerSensorServiceUUID("4fafc201-1fb5-459e-8fcc-c5c9c331914b");
-// The characteristic of the remote service we are interested in.
-static BLEUUID acclerometerCharacteristicUUID("beb5483e-36e1-4688-b7f5-ea07361b26a8");
-
+//Proximity Color Sensor
 // The remote service we wish to connect to.
 static BLEUUID proximityColorSensorServiceUUID("7cf0c267-4712-4ad8-bd08-47c1e7ed5e34");
 // The characteristic of the remote service we are interested in.
 static BLEUUID proximityColorCharacteristicUUID("6ad7b9c7-5f64-48f2-8a3b-2aeb886145b8");
 
+//Air Quality Sensor
+static BLEUUID airQualitySensorServiceUUID("7cf0c267-4712-4ad8-bd08-47c1e7ed5e35");
+static BLEUUID airQualityCharacteristicUUID("6ad7b9c7-5f64-48f2-8a3b-2aeb886145b9");
+
+//Microphone Sensor
+static BLEUUID microphoneSensorServiceUUID("7cf0c267-4712-4ad8-bd08-47c1e7ed5e36");
+static BLEUUID microphoneCharacteristicUUID("6ad7b9c7-5f64-48f2-8a3b-2aeb886145b0");
+
+//Altimeter Temperature Sensor
+static BLEUUID altimeterTemperatureSensorServiceUUID("7cf0c267-4712-4ad8-bd08-47c1e7ed5e37");
+static BLEUUID altimeterTemperatureCharacteristicUUID("6ad7b9c7-5f64-48f2-8a3b-2aeb886145b1");
+
 static boolean doConnect = false;
 static boolean connected = false;
 static boolean doScan = false;
-//TODO add pRemoteCharacterc
-static BLERemoteCharacteristic* pRemoteCharacteristicAcc;
 static BLERemoteCharacteristic* pRemoteCharacteristicProx;
+static BLERemoteCharacteristic* pRemoteCharacteristicAir;
+static BLERemoteCharacteristic* pRemoteCharacteristicMic;
+static BLERemoteCharacteristic* pRemoteCharacteristicAlt;
 static BLEAdvertisedDevice* myDevice;
 
 //MQTT
@@ -98,13 +106,23 @@ static void notifyCallback(
     // Serial.print("  ");
     // Serial.print("Notify callback for characteristic ");
     String identifier = pBLERemoteCharacteristic->getUUID().toString().c_str();
-    if (identifier.equals("beb5483e-36e1-4688-b7f5-ea07361b26a8")) {
-      //Acceleration
-      client.publish("vibration", pData, length);
-    } else if (identifier.equals("6ad7b9c7-5f64-48f2-8a3b-2aeb886145b8")) {
+    if (identifier.equals("6ad7b9c7-5f64-48f2-8a3b-2aeb886145b8")) {
       //Light Sensor
       client.publish("light", pData, length);
-    } //TODO ADD OTHER SENSOR
+    } else if (identifier.equals("6ad7b9c7-5f64-48f2-8a3b-2aeb886145b9")) {
+      //Air Quality Sensor
+      client.publish("air", pData, length);
+    } else if (identifier.equals("6ad7b9c7-5f64-48f2-8a3b-2aeb886145b0")) {
+      //Microphone Sensor
+      client.publish("microphone", pData, length);
+    } else if (identifier.equals("6ad7b9c7-5f64-48f2-8a3b-2aeb886145b1")) {
+      //Altimeter Temperature Sensor
+      client.publish("temperature", pData, length);
+    } else {
+      //Other Sensor
+      client.publish("other", pData, length);
+    }
+    
     // char* dataChar = (char*)pData;
     digitalWrite(ledPin, HIGH);
     digitalWrite(ledGreen, HIGH);
@@ -143,43 +161,6 @@ bool connectToServer() {
     Serial.println(" - Connected to server");
     pClient->setMTU(517); //set client to request maximum MTU from server (default is 23 otherwise)
 
-    // Accelerometer Service and Characteristic
-    
-    // Obtain a reference to the service we are after in the remote BLE server.
-    BLERemoteService* pRemoteServiceAcc = pClient->getService(accelerometerSensorServiceUUID);
-    if (pRemoteServiceAcc == nullptr) {
-      Serial.print("Failed to find our service UUID: ");
-      Serial.println(accelerometerSensorServiceUUID.toString().c_str());
-      pClient->disconnect();
-      return false;
-    }
-    Serial.println(" - Found our service");
-
-
-    // Obtain a reference to the characteristic in the service of the remote BLE server.
-    pRemoteCharacteristicAcc = pRemoteServiceAcc->getCharacteristic(acclerometerCharacteristicUUID);
-    if (pRemoteCharacteristicAcc == nullptr) {
-      Serial.print("Failed to find our characteristic UUID: ");
-      Serial.println(acclerometerCharacteristicUUID.toString().c_str());
-      pClient->disconnect();
-      return false;
-    }
-    Serial.println(" - Found our characteristic");
-
-
-    // Read the value of the characteristic.
-    if(pRemoteCharacteristicAcc->canRead()) {
-      int value = pRemoteCharacteristicAcc->readUInt8();
-      // Serial.print("The characteristic value was: ");
-      // Serial.println(value);
-      // Serial.println("TESTvalue");
-    }
-
-
-    if(pRemoteCharacteristicAcc->canNotify())
-      pRemoteCharacteristicAcc->registerForNotify(notifyCallback);
-
-
     // Proxmity and Color Sensor Service and Characteristic
 
     BLERemoteService* pRemoteServiceProx = pClient->getService(proximityColorSensorServiceUUID);
@@ -216,7 +197,89 @@ bool connectToServer() {
       pRemoteCharacteristicProx->registerForNotify(notifyCallback);
 
 
-    //TODO OTHER SENSORS pRemote vars like above
+    // Air Quality Sensor Service and Characteristic
+    BLERemoteService* pRemoteServiceAir = pClient->getService(airQualitySensorServiceUUID);
+    if (pRemoteServiceAir == nullptr) {
+      Serial.print("Failed to find our service UUID: ");
+      Serial.println(airQualitySensorServiceUUID.toString().c_str());
+      pClient->disconnect();
+      return false;
+    }
+    Serial.println(" - Found our service");
+
+    // Obtain a reference to the characteristic in the service of the remote BLE server.
+    pRemoteCharacteristicAir = pRemoteServiceAir->getCharacteristic(airQualityCharacteristicUUID);
+    if (pRemoteCharacteristicAir == nullptr) {
+      Serial.print("Failed to find our characteristic UUID: ");
+      Serial.println(airQualityCharacteristicUUID.toString().c_str());
+      pClient->disconnect();
+      return false;
+    }
+    Serial.println(" - Found our characteristic");
+
+    if (pRemoteCharacteristicAir->canRead()) {
+      int value = pRemoteCharacteristicAir->readUInt8();
+    }
+
+    if (pRemoteCharacteristicAir->canNotify())
+      pRemoteCharacteristicAir->registerForNotify(notifyCallback);
+
+    // Microphone Sensor Service and Characteristic
+    BLERemoteService* pRemoteServiceMic = pClient->getService(microphoneSensorServiceUUID);
+
+    if (pRemoteServiceMic == nullptr) {
+      Serial.print("Failed to find our service UUID: ");
+      Serial.println(microphoneSensorServiceUUID.toString().c_str());
+      pClient->disconnect();
+      return false;
+    }
+    Serial.println(" - Found our service");
+
+    // Obtain a reference to the characteristic in the service of the remote BLE server.
+    pRemoteCharacteristicMic = pRemoteServiceMic->getCharacteristic(microphoneCharacteristicUUID);
+    if (pRemoteCharacteristicMic == nullptr) {
+      Serial.print("Failed to find our characteristic UUID: ");
+      Serial.println(microphoneCharacteristicUUID.toString().c_str());
+      pClient->disconnect();
+      return false;
+    }
+    Serial.println(" - Found our characteristic");
+
+    if (pRemoteCharacteristicMic->canRead()) {
+      int value = pRemoteCharacteristicMic->readUInt8();
+    }
+
+    if (pRemoteCharacteristicMic->canNotify())
+      pRemoteCharacteristicMic->registerForNotify(notifyCallback);
+
+    // Altimeter Temperature Sensor Service and Characteristic
+    BLERemoteService* pRemoteServiceAlt = pClient->getService(altimeterTemperatureSensorServiceUUID);
+
+    if (pRemoteServiceAlt == nullptr) {
+      Serial.print("Failed to find our service UUID: ");
+      Serial.println(altimeterTemperatureSensorServiceUUID.toString().c_str());
+      pClient->disconnect();
+      return false;
+    }
+    Serial.println(" - Found our service");
+
+    // Obtain a reference to the characteristic in the service of the remote BLE server.
+    pRemoteCharacteristicAlt = pRemoteServiceAlt->getCharacteristic(altimeterTemperatureCharacteristicUUID);
+    if (pRemoteCharacteristicAlt == nullptr) {
+      Serial.print("Failed to find our characteristic UUID: ");
+      Serial.println(altimeterTemperatureCharacteristicUUID.toString().c_str());
+      pClient->disconnect();
+      return false;
+    }
+    Serial.println(" - Found our characteristic");
+
+    if (pRemoteCharacteristicAlt->canRead()) {
+      int value = pRemoteCharacteristicAlt->readUInt8();
+    }
+
+    if (pRemoteCharacteristicAlt->canNotify())
+      pRemoteCharacteristicAlt->registerForNotify(notifyCallback);
+
 
 
     connected = true;
@@ -234,9 +297,11 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
     Serial.println(advertisedDevice.toString().c_str());
 
     // We have found a device, let us now see if it contains the service we are looking for.
-    // TODO other services di OR
-    if (advertisedDevice.haveServiceUUID() && (advertisedDevice.isAdvertisingService(accelerometerSensorServiceUUID) 
-        || advertisedDevice.isAdvertisingService(proximityColorSensorServiceUUID))) {
+    if (advertisedDevice.haveServiceUUID() && advertisedDevice.isAdvertisingService(proximityColorSensorServiceUUID) 
+          || advertisedDevice.isAdvertisingService(airQualitySensorServiceUUID) 
+          || advertisedDevice.isAdvertisingService(microphoneSensorServiceUUID) 
+          || advertisedDevice.isAdvertisingService(altimeterTemperatureSensorServiceUUID))
+    ) {
 
       BLEDevice::getScan()->stop();
       myDevice = new BLEAdvertisedDevice(advertisedDevice);
@@ -326,9 +391,11 @@ void loop() {
     // Serial.println("Setting new characteristic value to \"" + newValue + "\"");
     
     // Set the characteristic's value to be the array of bytes that is actually a string.
-    //TODO other pRemoteChar
-    pRemoteCharacteristicAcc->writeValue(newValue.c_str(), newValue.length());
+    
     pRemoteCharacteristicProx->writeValue(newValue.c_str(), newValue.length());
+    pRemoteCharacteristicAir->writeValue(newValue.c_str(), newValue.length());
+    pRemoteCharacteristicMic->writeValue(newValue.c_str(), newValue.length());
+    pRemoteCharacteristicAlt->writeValue(newValue.c_str(), newValue.length());
     
     digitalWrite(ledYellow, HIGH);
   }else if(doScan){
