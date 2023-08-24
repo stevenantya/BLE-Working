@@ -28,6 +28,7 @@ const char* mqttTopic = "test/data";
 WiFiClient espClient;
 PubSubClient client(espClient);
 
+//TODO Add other UUIDs
 // The remote service we wish to connect to.
 static BLEUUID accelerometerSensorServiceUUID("4fafc201-1fb5-459e-8fcc-c5c9c331914b");
 // The characteristic of the remote service we are interested in.
@@ -41,6 +42,7 @@ static BLEUUID proximityColorCharacteristicUUID("6ad7b9c7-5f64-48f2-8a3b-2aeb886
 static boolean doConnect = false;
 static boolean connected = false;
 static boolean doScan = false;
+//TODO add pRemoteCharacterc
 static BLERemoteCharacteristic* pRemoteCharacteristicAcc;
 static BLERemoteCharacteristic* pRemoteCharacteristicProx;
 static BLEAdvertisedDevice* myDevice;
@@ -102,7 +104,7 @@ static void notifyCallback(
     } else if (identifier.equals("6ad7b9c7-5f64-48f2-8a3b-2aeb886145b8")) {
       //Light Sensor
       client.publish("light", pData, length);
-    }
+    } //TODO ADD OTHER SENSOR
     // char* dataChar = (char*)pData;
     digitalWrite(ledPin, HIGH);
     digitalWrite(ledGreen, HIGH);
@@ -178,9 +180,6 @@ bool connectToServer() {
       pRemoteCharacteristicAcc->registerForNotify(notifyCallback);
 
 
-
-
-
     // Proxmity and Color Sensor Service and Characteristic
 
     BLERemoteService* pRemoteServiceProx = pClient->getService(proximityColorSensorServiceUUID);
@@ -216,6 +215,10 @@ bool connectToServer() {
     if(pRemoteCharacteristicProx->canNotify())
       pRemoteCharacteristicProx->registerForNotify(notifyCallback);
 
+
+    //TODO OTHER SENSORS pRemote vars like above
+
+
     connected = true;
     return true;
 }
@@ -231,6 +234,7 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
     Serial.println(advertisedDevice.toString().c_str());
 
     // We have found a device, let us now see if it contains the service we are looking for.
+    // TODO other services di OR
     if (advertisedDevice.haveServiceUUID() && (advertisedDevice.isAdvertisingService(accelerometerSensorServiceUUID) 
         || advertisedDevice.isAdvertisingService(proximityColorSensorServiceUUID))) {
 
@@ -322,6 +326,7 @@ void loop() {
     // Serial.println("Setting new characteristic value to \"" + newValue + "\"");
     
     // Set the characteristic's value to be the array of bytes that is actually a string.
+    //TODO other pRemoteChar
     pRemoteCharacteristicAcc->writeValue(newValue.c_str(), newValue.length());
     pRemoteCharacteristicProx->writeValue(newValue.c_str(), newValue.length());
     
