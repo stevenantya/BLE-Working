@@ -1,13 +1,14 @@
+const int MIC_PIN = A0;  // Set to the analog pin where your microphone's OUT is connected
+const int SAMPLE_RATE = 10000;  // Sample rate in Hz. You can adjust this based on your needs.
+
 void setup() {
-  // initialize serial communication at 9600 bits per second:
-  Serial.begin(9600);
+  Serial.begin(115200);
+  analogReadResolution(10);  // Set ADC resolution to 10 bits for Nano 33 BLE Sense
 }
 
-// the loop routine runs over and over again forever:
 void loop() {
-  // read the input on analog pin 0:
-  int sensorValue = analogRead(A0);
-  // print out the value you read:
-  Serial.println(sensorValue);
-  delay(5);
-  }
+  int micValue = analogRead(MIC_PIN);
+  Serial.println(micValue);
+
+  delayMicroseconds(1000000 / SAMPLE_RATE);  // Respect the sample rate
+}
