@@ -1,25 +1,33 @@
 import serial
-import numpy as np
-from scipy.io.wavfile import write
+import wave
 
-SAMPLE_RATE = 10000  # Must match the Arduino's sample rate
-DURATION = 10  # Duration of recording in seconds
+PORT = 'COM5' # Replace with your Arduino's serial port (e.g., COM3 or /dev/ttyUSB0)
+BAUD_RATE = 115200
+DURATION = 10  # Recording duration in seconds
+SAMPLE_RATE = 4000  # Sample rate in Hz (this is a rough approximation)
 
-# Set up serial connection (modify the COM port accordingly)
-ser = serial.Serial('COM5', 115200)
-data = []
+ser = serial.Serial(PORT, BAUD_RATE)
 
-print("Recording...")
+# Initialize an empty list to store the samples
+samples = []
+
+# Read audio samples for the specified duration
 for _ in range(SAMPLE_RATE * DURATION):
     try:
-        line = ser.readline().decode('utf-8').strip()
-        value = int(line)
-        data.append(value)
+        line = ser.readline().decode('utf-8').strip()  # Read a line from the serial port
+        sample = int(line)
+        samples.append(sample)
     except:
         pass
 
-print("Saving...")
-data = np.array(data, dtype=np.int16)
-write("C:/Users/steve/NUS_NCS_IOT/BLE Working/Mic/mic_demo/output.wav", SAMPLE_RATE, data)
-
 ser.close()
+
+# Convert samples to bytes
+samples_bytes = bytes(samples)
+
+# Write to a wave file
+with wave.open("audio_output.wav", "wb") as wave_file:
+    wave_file.setnchannels(1)
+    wave_file.setsampwidth(2)  # 2 bytes
+    wave_file.setframerate(SAMPLE_RATE)
+    wave_file.writeframes(samples_bytes)
