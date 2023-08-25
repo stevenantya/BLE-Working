@@ -8,7 +8,7 @@
  4. Light Sensor
 
 */
-isBLEExperiment = true;
+bool isBLEExperiment = true;
 #include<Arduino.h>
 #include <ArduinoBLE.h>
 #include <avr/dtostrf.h>
@@ -38,16 +38,16 @@ BLEService altimeterTemperatureSensorService("7cf0c267-4712-4ad8-bd08-47c1e7ed5e
 //Ligth Sensor Variables
 int proximity = 0;
 int r = 0, g = 0, b = 0;
-char proximityColorData[50] = "0000,0000,0000,0000\n";
+char proximityColorData[150] = "0000,0000,0000,0000\n";
 
 //Air Quality Sensor Variables
-char airQualityData[50] = "00.00,00.00,00.00,00.00,00,00.00,00.00\n";
+char airQualityData[300] = "471.30,632.90,748.20,802.10,43.83,27.50,25.00\n";
 
 //Microphone Variables
-char microphoneData[50] = "0000.0000\n";
+char microphoneData[150] = "0000.0000\n";
 
 //Barometer Variables
-char altimeterTemperatureData[50] = "0000.00,00.00,00.00\n";
+char altimeterTemperatureData[150] = "0000.00,00.00,00.00\n";
 
 BLECharacteristic proximityColorSensor("6ad7b9c7-5f64-48f2-8a3b-2aeb886145b8",  // standard 16-bit characteristic UUID
     BLERead | BLENotify, proximityColorData); // remote clients will be able to get notifications if this characteristic changes
@@ -150,54 +150,14 @@ float getMicrophoneData() {
     return dB;
 }
 
-// void printSerial has pressure, altitude, temperature, massConcentrationPm1p0, massConcentrationPm2p5, massConcentrationPm4p0, massConcentrationPm10p0, ambientHumidity, ambientTemperature, vocIndex, noxIndex, proximity, r, g, b, microphoneData) as parameters
-void printSerial(float pressure, altitude, temperature, massConcentrationPm1p0, massConcentrationPm2p5, massConcentrationPm4p0, massConcentrationPm10p0, ambientHumidity, ambientTemperature, vocIndex, noxIndex, int proximity, int r, int g, int b, int microphoneData) {
-    //print all of the sensor values above
-    Serial.print("Pressure: ");
-    Serial.print(pressure);
-    Serial.print(" Pa, Altitude: ");
-    Serial.print(altitude);
-    Serial.print(" m, Temperature: ");
-    Serial.print(temperature);
-    Serial.println(" deg. C");
-
-    //print all of the air quality values
-    Serial.print("Mass Concentration PM 1.0: ");
-    Serial.print(massConcentrationPm1p0);
-    Serial.print(" ug/m3, PM 2.5: ");
-    Serial.print(massConcentrationPm2p5);
-    Serial.print(" ug/m3, PM 4.0: ");
-    Serial.print(massConcentrationPm4p0);
-    Serial.print(" ug/m3, PM 10.0: ");
-    Serial.print(massConcentrationPm10p0);
-    Serial.print(" ug/m3, Ambient Humidity: ");
-    Serial.print(ambientHumidity);
-    Serial.print(" %, Ambient Temperature: ");
-    Serial.print(ambientTemperature);
-    Serial.print(" deg. C, VOC Index: ");
-    Serial.print(vocIndex);
-    Serial.print(", NOx Index: ");
-    Serial.println(noxIndex);
-
-    //print all of the light sensor values
-    Serial.print("Proximity: ");
-    Serial.print(proximity);
-    Serial.print(", Red: ");
-    Serial.print(r);
-    Serial.print(", Green: ");
-    Serial.print(g);
-    Serial.print(", Blue: ");
-    Serial.println(b);
-}
-
 void updateBarometerData() {
     float pressure = baro.getPressure();
     float altitude = baro.getAltitude();
     float temperature = baro.getTemperature();
 
-    char char_pressure[7] = "0000.00";
-    char char_altitude[7] = "0000.00";
-    char char_temperature[7] = "00.00";
+    char char_pressure[10] = "0000.00";
+    char char_altitude[10] = "0000.00";
+    char char_temperature[10] = "00.00";
 
     dtostrf(pressure, 0, 2, char_pressure);
     dtostrf(altitude, 0, 2, char_altitude);
@@ -209,6 +169,7 @@ void updateBarometerData() {
     strcat(altimeterTemperatureData, ",");
     strcat(altimeterTemperatureData, char_temperature);
 
+    Serial.println(altimeterTemperatureData);
     altimeterTemperatureSensor.writeValue(altimeterTemperatureData);
 }
 
@@ -237,13 +198,13 @@ void updateAirQualityData() {
     }
 
     //create char conversion using dtostrf for all variables above
-    char char_massConcentrationPm1p0[7] = "00.00";
-    char char_massConcentrationPm2p5[7] = "00.00";
-    char char_massConcentrationPm4p0[7] = "00.00";
-    char char_massConcentrationPm10p0[7] = "00.00";
-    char char_ambientHumidity[7] = "00.00";
-    char char_ambientTemperature[7] = "00.00";
-    char char_vocIndex[7] = "00.00";
+    char char_massConcentrationPm1p0[10] = "00.00";
+    char char_massConcentrationPm2p5[10] = "00.00";
+    char char_massConcentrationPm4p0[10] = "00.00";
+    char char_massConcentrationPm10p0[10] = "00.00";
+    char char_ambientHumidity[10] = "00.00";
+    char char_ambientTemperature[10] = "00.00";
+    char char_vocIndex[10] = "00.00";
 
     //convert all variables above to char
     dtostrf(massConcentrationPm1p0, 0, 2, char_massConcentrationPm1p0);
@@ -269,6 +230,7 @@ void updateAirQualityData() {
     strcat(airQualityData, ",");
     strcat(airQualityData, char_vocIndex);
 
+    Serial.println(airQualityData);
     //write the char variable to the BLE characteristic
     airQualitySensor.writeValue(airQualityData);
 
@@ -276,14 +238,19 @@ void updateAirQualityData() {
 
 void updateLightSensorData() {
     int proximity,r,g,b;
-    proximity = APDS.readProximity();
+    if (APDS.proximityAvailable()) {
+      proximity = APDS.readProximity();
+    }
+    while (! APDS.colorAvailable()) {
+      delay(5);
+    }
     APDS.readColor(r, g, b);
 
     //create char conversion using dtostrf for all variables above
-    char char_proximity[7] = "0000";
-    char char_r[7] = "0000";
-    char char_g[7] = "0000";
-    char char_b[7] = "0000";
+    char char_proximity[10] = "0000";
+    char char_r[10] = "0000";
+    char char_g[10] = "0000";
+    char char_b[10] = "0000";
 
     //convert all variables above to char
     itoa(proximity,char_proximity,10);
@@ -300,6 +267,7 @@ void updateLightSensorData() {
     strcat(proximityColorData, ",");
     strcat(proximityColorData, char_b);
 
+    Serial.println(proximityColorData);
     //write the char variable to the BLE characteristic
     proximityColorSensor.writeValue(proximityColorData);
 }
@@ -308,16 +276,14 @@ void updateMicrophoneData() {
     float microphoneData = getMicrophoneData();
 
     //create char conversion using dtostrf for all variables above
-    char char_microphoneData[7] = "0000.00";
+    char char_microphoneData[10] = "0000.00";
 
     //convert all variables above to char
     dtostrf(microphoneData, 0, 2, char_microphoneData);
 
-    //concatenate all char variables above into one char variable
-    strcpy(microphoneData, char_microphoneData);
-
+    Serial.println(char_microphoneData);
     //write the char variable to the BLE characteristic
-    microphoneSensor.writeValue(microphoneData);
+    microphoneSensor.writeValue(char_microphoneData);
 }
 
 void setup() {
@@ -435,6 +401,7 @@ void loop() {
         
         bool isFirstConnection = true;
         while (central.connected()) {
+            Serial.println("Device is connected");
             int curr_time = millis();
             if (isFirstConnection) {
                 while (millis() < curr_time + 2000); //wait for 2 seconds for bluetooth to establish correctly

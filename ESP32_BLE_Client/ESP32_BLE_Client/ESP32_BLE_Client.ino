@@ -128,7 +128,7 @@ static void notifyCallback(
     digitalWrite(ledGreen, HIGH);
     Serial.write(pData, length);
 
-    client.publish("test/status", pData, length);
+    client.publish("robot", pData, length);
     Serial.println();
 }
 
@@ -300,8 +300,7 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
     if (advertisedDevice.haveServiceUUID() && advertisedDevice.isAdvertisingService(proximityColorSensorServiceUUID) 
           || advertisedDevice.isAdvertisingService(airQualitySensorServiceUUID) 
           || advertisedDevice.isAdvertisingService(microphoneSensorServiceUUID) 
-          || advertisedDevice.isAdvertisingService(altimeterTemperatureSensorServiceUUID))
-    ) {
+          || advertisedDevice.isAdvertisingService(altimeterTemperatureSensorServiceUUID)) {
 
       BLEDevice::getScan()->stop();
       myDevice = new BLEAdvertisedDevice(advertisedDevice);
