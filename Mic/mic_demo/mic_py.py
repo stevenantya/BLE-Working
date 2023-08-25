@@ -6,7 +6,7 @@ SAMPLE_RATE = 10000  # Must match the Arduino's sample rate
 DURATION = 10  # Duration of recording in seconds
 
 # Set up serial connection (modify the COM port accordingly)
-ser = serial.Serial('COM_PORT_HERE', 115200)
+ser = serial.Serial('COM5', 115200)
 data = []
 
 print("Recording...")
@@ -20,6 +20,6 @@ for _ in range(SAMPLE_RATE * DURATION):
 
 print("Saving...")
 data = np.array(data, dtype=np.int16)
-write("output.wav", SAMPLE_RATE, data)
+write("C:/Users/steve/NUS_NCS_IOT/BLE Working/Mic/mic_demo/output.wav", SAMPLE_RATE, data)
 
 ser.close()
