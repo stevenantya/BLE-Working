@@ -19,11 +19,11 @@ int ledGreen = 26;
 // Replace these with your WiFi and MQTT broker details
 const char* ssid = "myuan";
 const char* password = "98765432";
-const char* mqttServer = "192.168.237.135";
+const char* mqttServer = "192.168.3.135";
 const int mqttPort = 1883;
 const char* mqttUser = "pi";  // If needed
 const char* mqttPassword = "123456"; // If needed
-const char* mqttTopic = "test/data";
+const char* mqttTopic = "robot";
 
 WiFiClient espClient;
 PubSubClient client(espClient);
