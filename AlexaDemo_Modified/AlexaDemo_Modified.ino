@@ -1,3 +1,4 @@
+#include "Arduino.h"
 #include "NDP.h"
 
 //const bool lowestPower = true;
@@ -53,7 +54,6 @@ void setup() {
   // NDP.getInfo();
   // Serial.println("Configure mic");
   NDP.turnOnMicrophone();
-  NDP.interrupts();
 
   // Check the audio chunk size to ensure it doesn't exceed the buffer size
   int chunk_size = NDP.getAudioChunkSize();
