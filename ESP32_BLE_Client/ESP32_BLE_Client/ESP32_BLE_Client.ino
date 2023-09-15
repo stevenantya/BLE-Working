@@ -28,6 +28,10 @@ const char* mqttTopic = "robot";
 WiFiClient espClient;
 PubSubClient client(espClient);
 
+//RSSI Sensor
+static BLEUUID RSSIServiceUUID("7cf0c267-4712-4ad8-bd08-47c1e7ed5e12");
+static BLEUUID RSSICharacteristicUUID("6ad7b9c7-5f64-48f2-8a3b-2aeb886145a4");
+
 //Proximity Color Sensor
 // The remote service we wish to connect to.
 static BLEUUID proximityColorSensorServiceUUID("7cf0c267-4712-4ad8-bd08-47c1e7ed5e34");
@@ -53,6 +57,7 @@ static BLERemoteCharacteristic* pRemoteCharacteristicProx;
 static BLERemoteCharacteristic* pRemoteCharacteristicAir;
 static BLERemoteCharacteristic* pRemoteCharacteristicMic;
 static BLERemoteCharacteristic* pRemoteCharacteristicAlt;
+static BLERemoteCharacteristic* pRemoteCharacteristicRSSI;
 static BLEAdvertisedDevice* myDevice;
 
 //MQTT
@@ -118,6 +123,9 @@ static void notifyCallback(
     } else if (identifier.equals("6ad7b9c7-5f64-48f2-8a3b-2aeb886145b1")) {
       //Altimeter Temperature Sensor
       client.publish("temperature", pData, length);
+    } else if (identifier.equals("6ad7b9c7-5f64-48f2-8a3b-2aeb886145a4")) {
+      //RSSI Sensor
+      client.publish("RSSI", pData, length);
     } else {
       //Other Sensor
       client.publish("other", pData, length);
@@ -160,6 +168,43 @@ bool connectToServer() {
     pClient->connect(myDevice);  // if you pass BLEAdvertisedDevice instead of address, it will be recognized type of peer device address (public or private)
     Serial.println(" - Connected to server");
     pClient->setMTU(517); //set client to request maximum MTU from server (default is 23 otherwise)
+
+
+    // RSSI Service and Characteristic
+
+    BLERemoteService* pRemoteServiceRSSI = pClient->getService(RSSIServiceUUID);
+    if (pRemoteServiceRSSI == nullptr) {
+      Serial.print("Failed to find our service UUID: ");
+      Serial.println(RSSIServiceUUID.toString().c_str());
+      pClient->disconnect();
+      return false;
+    }
+    Serial.println(" - Found our service");
+
+
+    // Obtain a reference to the characteristic in the service of the remote BLE server.
+    pRemoteCharacteristicRSSI = pRemoteServiceRSSI->getCharacteristic(RSSICharacteristicUUID);
+    if (pRemoteCharacteristicRSSI == nullptr) {
+      Serial.print("Failed to find our characteristic UUID: ");
+      Serial.println(RSSICharacteristicUUID.toString().c_str());
+      pClient->disconnect();
+      return false;
+    }
+    Serial.println(" - Found our characteristic");
+
+
+    // Read the value of the characteristic.
+    if(pRemoteCharacteristicRSSI->canRead()) {
+      int value = pRemoteCharacteristicRSSI->readUInt8();
+      // Serial.print("The characteristic value was: ");
+      // Serial.println(value);
+      // Serial.println("TESTvalue");
+    }
+
+
+    if(pRemoteCharacteristicRSSI->canNotify())
+      pRemoteCharacteristicRSSI->registerForNotify(notifyCallback);
+
 
     // Proxmity and Color Sensor Service and Characteristic
 
@@ -300,7 +345,8 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
     if (advertisedDevice.haveServiceUUID() && advertisedDevice.isAdvertisingService(proximityColorSensorServiceUUID) 
           || advertisedDevice.isAdvertisingService(airQualitySensorServiceUUID) 
           || advertisedDevice.isAdvertisingService(microphoneSensorServiceUUID) 
-          || advertisedDevice.isAdvertisingService(altimeterTemperatureSensorServiceUUID)) {
+          || advertisedDevice.isAdvertisingService(altimeterTemperatureSensorServiceUUID)
+          || advertisedDevice.isAdvertisingService(RSSIServiceUUID)) {
 
       BLEDevice::getScan()->stop();
       myDevice = new BLEAdvertisedDevice(advertisedDevice);
@@ -395,9 +441,9 @@ void loop() {
     pRemoteCharacteristicAir->writeValue(newValue.c_str(), newValue.length());
     pRemoteCharacteristicMic->writeValue(newValue.c_str(), newValue.length());
     pRemoteCharacteristicAlt->writeValue(newValue.c_str(), newValue.length());
-    
+    pRemoteCharacteristicRSSI->writeValue(newValue.c_str(), newValue.length());
     digitalWrite(ledYellow, HIGH);
-  }else if(doScan){
+  } else if(doScan){
     BLEDevice::getScan()->start(0);  // this is just example to start scan after disconnect, most likely there is better way to do it in arduino
     digitalWrite(ledYellow, LOW);
   }
